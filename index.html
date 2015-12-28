@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+
+        <title>viewr</title>
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css">
+
+        <link rel="stylesheet" href="./css/index.css">
+
+        <script src="./js/modernizr-custom.js"></script>
+        <script src="https://npmcdn.com/underscore@1.8.3/underscore-min.js"></script>
+        <script src="https://npmcdn.com/vue@1.0.12/dist/vue.min.js"></script>
+        <script src="https://npmcdn.com/vue-resource@0.5.1/dist/vue-resource.min.js"></script>
+        <script src="https://npmcdn.com/vue-router@0.7.7/dist/vue-router.min.js"></script>
+
+        <script src="./js/index.js" defer></script>
+    </head>
+    <body>
+        <div id="app">
+            <router-view></router-view>
+        </div>
+
+        <template id="viewer">
+            <thumbnail :height="height" :photo="photo" :close="close"></thumbnail>
+            <photos v-for="item in items" :item="item" :open="open"></photos>
+        </template>
+
+        <template id="photos">
+            <a v-on:click="open(photo)" v-for="photo in item.photos">
+                <img src="{{ photo.alt_sizes | thumbnail }}" width="160">
+            </a>
+        </template>
+
+        <template id="thumbnail">
+            <div class="thumbnail__outer" :style="{ height: height + 'px' }" v-if="photo" v-on:click="close">
+                <div class="thumbnail__inner material--idx2" :style="{ marginLeft: -(photo.original_size.width / 2) + 'px' }">
+                    <img src="{{ photo.original_size.url }}" width="{{ photo.original_size.width }}" height="{{ photo.original_size.height }}">
+                </div>
+            </div>
+        </template>
+    </body>
+</html>

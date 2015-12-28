@@ -1,0 +1,75 @@
+@charset "UTF-8";
+
+/** Fundamental styles */
+
+body {
+    font-size: 1em;
+    line-height: 1.6;
+}
+
+
+/** Material design blocks */
+
+.material {
+    box-shadow: none;
+    transition-duration: 0.3s;
+    transition-property: box-shadow;
+    transition-timing-function: ease;
+    z-index: 0;
+}
+
+.material--idx1 {
+    box-shadow: 0 1px 1px 0 hsla(0,0%,31%,0.6);
+    z-index: 1;
+}
+
+.material--idx2 {
+    box-shadow: 0 2px 2px 1px hsla(0,0%,31%,0.6);
+    z-index: 2;
+}
+
+.material--idx3 {
+    box-shadow: 0 3px 3px 2px hsla(0,0%,31%,0.6);
+    z-index: 3;
+}
+
+
+/** Vue transition styles */
+
+.elevate-transition {
+    opacity: 1;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    transition-duration: 0.3s;
+    transition-property: all;
+    transition-timing-function: ease;
+}
+
+.elevate-enter {
+    opacity: 0;
+    top: 100%;
+}
+
+.elevate-leave {
+    opacity: 0;
+    top: -100%;
+}
+
+
+
+.thumbnail__outer {
+    background-color: hsla(0,0%,0%,0.6);
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 1;
+}
+
+.thumbnail__inner {
+    left: 50%;
+    position: absolute;
+    top: 30px;
+}
