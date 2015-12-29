@@ -36,33 +36,81 @@ body {
 
 /** Vue transition styles */
 
-.elevate-transition {
+[v-cloak] { display: none }
+
+.fade-transition {
     opacity: 1;
-    overflow: hidden;
-    position: absolute;
-    top: 0;
     transition-duration: 0.3s;
-    transition-property: all;
+    transition-property: opacity;
     transition-timing-function: ease;
 }
 
-.elevate-enter {
+.fade-enter {
     opacity: 0;
-    top: 100%;
 }
 
-.elevate-leave {
+.fade-leave {
     opacity: 0;
-    top: -100%;
 }
 
+
+/** Page styles */
 
 .nav {
-    background-color: hsl(0,100%,100%);
-    left: 10px;
+    background-color: hsla(0,100%,100%,0.6);
+    bottom: 0;
+    box-sizing: border-box;
+    left: 0;
+    padding: 3px 10px;
     position: fixed;
-    top: 10px;
-    z-index: 10;
+    word-spacing: 16px;
+}
+
+.nav > a {
+    color: hsl(0,0%,0%);
+}
+
+.nav > a:hover {
+    color: hsl(0,0%,63%);
+}
+
+
+.gallery {
+    align-content: center;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin: auto;
+}
+
+.gallery__thumbnail {
+    box-sizing: border-box;
+    flex-basis: 76px;
+    flex-grow: 0;
+    height: 76px;
+    width: 76px;
+}
+
+.gallery__thumbnail > a > img {
+    opacity: 1;
+    transition-duration: 0.3s;
+    transition-property: opacity;
+    transition-timing-function: ease;
+}
+
+.gallery__thumbnail > a:hover > img {
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+
+.loader {
+    background-color: hsl(0,90%,40%);
+    height: 10px;
+    left: 0;
+    position: absolute;
+    top: 0;
 }
 
 
@@ -75,6 +123,9 @@ body {
     opacity: 0.8;
     position: fixed;
     top: 0;
+    transition-duration: 0.3s;
+    transition-property: background-position;
+    transition-timing-function: ease;
     width: 100%;
     z-index: 1;
 }
@@ -89,26 +140,23 @@ body {
     z-index: 2;
 }
 
-
-.gallery {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+.popup__image > a > img {
+    box-sizing: border-box;
+    height: 100%;
+    padding: 1%;
 }
 
-.gallery__thumbnail {
-    flex-basis: 85px;
-    flex-grow: 1;
-    flex-shrink: 1;
-    height: 85px;
-    text-align: center;
-}
-
-
-.loader {
-    background-color: hsl(0,90%,40%);
-    height: 10px;
-    left: 0;
+.popup__image > a > i {
+    bottom: 3%;
+    color: hsl(0,100%,100%);
+    opacity: 0;
     position: absolute;
-    top: 0;
+    right: 2%;
+    transition-duration: 0.3s;
+    transition-property: opacity;
+    transition-timing-function: ease;
+}
+
+.popup__image > a:hover > i {
+    opacity: 1;
 }

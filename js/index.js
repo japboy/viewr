@@ -56,6 +56,7 @@ var Viewer = Vue.extend({
   template: '#viewer',
   data: function () {
     return {
+      width: 0,
       photos: [],
       total: 0,
       photo: null,
@@ -66,20 +67,40 @@ var Viewer = Vue.extend({
   components: {
     'thumbnails': {
       template: '#thumbnails',
-      props: [ 'photos', 'open' ]
+      props: [ 'width', 'photos', 'open' ],
+      ready: function () {
+        console.log('ready?');
+      }
     },
     'popup': {
       template: '#popup',
       props: [ 'photo', 'close' ],
+      methods: {
+        load: function () {
+          this.$dispatch('load');
+        },
+        mousemove: function (ev) {
+          var normalized = {
+            x: ev.clientX / global.innerWidth,
+            y: (ev.clientY + (global.innerHeight / 2)) / global.innerHeight
+          };
+          this.$el.querySelector('.popup__background').style.backgroundPosition = '50% ' + global.Math.floor(normalized.y * 6) + '%';
+        }
+      },
       ready: function () {
-        var that = this;
-        global.document.querySelector('.popup__image img').addEventListener('load', function () {
-          that.$dispatch('load');
-        }, false);
+        this.$el.querySelector('.popup__image img').addEventListener('load', this.load, false);
+        window.addEventListener('mousemove', this.mousemove, false);
+      },
+      beforeDestroy: function () {
+        this.$el.querySelector('.popup__image img').removeEventListener('load', this.load);
+        window.removeEventListener('mousemove', this.mousemove);
       }
     }
   },
   methods: {
+    resize: function () {
+      this.$set('width', global.Math.floor(global.innerWidth / 76) * 76);
+    },
     open: function (index) {
       var photo = this.$get('photos')[index];
       this.$set('photo', photo);
@@ -131,6 +152,13 @@ var Viewer = Vue.extend({
       }, 3000);
     }
   },
+  ready: function () {
+    global.addEventListener('resize', this.resize, false);
+    this.resize();
+  },
+  beforeDestroy: function () {
+    global.removeEventListener('resize', this.resize);
+  },
   route: {
     data: function (transition) {
       var query = this.$route.params.query ? global.encodeURIComponent(this.$route.params.query) : 'starwars';
@@ -162,7 +190,7 @@ router.start(App, '#app');
 
 // API
 
-function tumblrUpdated (query, max, offset, photos, callback) {
+function tumblrUpdated (query, max, offset, photos, done) {
   var url = (function () {
     var patterns = [
       {
@@ -205,12 +233,12 @@ function tumblrUpdated (query, max, offset, photos, callback) {
     console.log(maxCount, totalCount);
 
     if (actualTotalCount > totalCount && maxCount > totalCount) {
-      tumblrUpdated(query, max, totalCount, totalPhotos, callback);
+      tumblrUpdated(query, max, totalCount, totalPhotos, done);
       return;
     }
 
     if (actualTotalCount * 2 > totalCount) {
-      callback({ photos: totalPhotos, total: totalCount });
+      done({ photos: totalPhotos, total: totalCount });
     }
   });
 }

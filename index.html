@@ -27,32 +27,37 @@
         </div>
 
         <template id="viewer">
-            <nav class="nav">
-                <a v-on:click="backward"><i class="fa fa-backward"></i></a>
-                <a v-on:click="pause"><i class="fa fa-pause"></i></a>
-                <a v-on:click="play"><i class="fa fa-play"></i></a>
-                <a v-on:click="forward"><i class="fa fa-forward"></i></a>
+            <nav class="nav material--idx3">
+                <a @click="backward"><i class="fa fa-backward"></i></a>
+                <a @click="pause"><i class="fa fa-pause"></i></a>
+                <a @click="play"><i class="fa fa-play"></i></a>
+                <a @click="forward"><i class="fa fa-forward"></i></a>
             </nav>
-            <thumbnails :photos="photos" :open="open"></thumbnails>
-            <popup :photo="photo" :close="close"></popup>
+            <thumbnails :width="width" :photos="photos" :open="open"></thumbnails>
+            <popup :photo="photo" :close="close" transition="fade" v-if="photo" v-cloak></popup>
         </template>
 
         <template id="thumbnails">
-            <div class="gallery">
-                <a class="gallery__thumbnail" v-for="photo in photos" v-on:click="open($index)">
-                    <img src="{{ photo.alt_sizes | thumbnail }}" width="75" height="75">
-                </a>
+            <div class="gallery" :style="{ width: width + 'px' }">
+                <span class="gallery__thumbnail" v-for="photo in photos">
+                    <a @click="open($index)">
+                        <img src="{{ photo.alt_sizes | thumbnail }}" width="75" height="75">
+                    </a>
+                </span>
             </div>
             <div class="loader"></div>
         </template>
 
         <template id="popup">
-            <div class="popup__background" :style="{ backgroundImage: 'url(' + photo.original_size.url + ')' }" v-show="photo"></div>
-            <div class="popup__image material--idx2" v-show="photo" v-on:click="close">
-                <a href="{{ photo.post_url }}" v-on:click.stop>
-                    <img src="{{ photo.original_size.url }}" alt="{{ photo.summary | nobreaks }}" :style="{ boxSizing: 'border-box', height: '98%', padding: '1%' }">
-                </a>
-            </div>
+            <section>
+                <div class="popup__background" :style="{ backgroundImage: 'url(' + photo.original_size.url + ')' }"></div>
+                <div class="popup__image" @click="close">
+                    <a href="{{ photo.post_url }}" @click.stop>
+                        <img src="{{ photo.original_size.url }}" alt="{{ photo.summary | nobreaks }}">
+                        <i class="fa fa-tumblr-square fa-3x"></i>
+                    </a>
+                </div>
+            </section>
         </template>
     </body>
 </html>
