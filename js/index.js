@@ -145,7 +145,11 @@ var Viewer = Vue.extend({
 // Vue router declaration
 
 /** Main router */
-var router = new VueRouter();
+var router = new VueRouter({
+  hashbang: false,
+  history: true,
+  saveScrollPosition: true
+});
 
 /** Route bindings */
 router.map({
