@@ -31,6 +31,11 @@ Vue.filter('paragraph', function (value) {
   return (value.length > 0 ? '<p>' + value.replace(/[\r\n]+/, '</p><p>') + '</p>' : null);
 });
 
+/** Swap break lines to spaces */
+Vue.filter('nobreaks', function (value) {
+  return value.replace(/(\n|\r\n)/g, ' ');
+});
+
 /** Smallest thumbnail */
 Vue.filter('thumbnail', function (values) {
   return _
@@ -38,7 +43,6 @@ Vue.filter('thumbnail', function (values) {
   .sortBy('width')
   .first()
   .value().url;
-
 });
 
 
@@ -52,65 +56,87 @@ var Viewer = Vue.extend({
   template: '#viewer',
   data: function () {
     return {
-      height: null,
-      photo: null
+      photos: [],
+      total: 0,
+      photo: null,
+      index: 0,
+      playing: false
     };
   },
   components: {
-    'photos': {
-      template: '#photos',
-      props: [ 'item', 'open' ]
+    'thumbnails': {
+      template: '#thumbnails',
+      props: [ 'photos', 'open' ]
     },
-    'thumbnail': {
-      template: '#thumbnail',
-      props: [ 'photo', 'height', 'close' ]
+    'popup': {
+      template: '#popup',
+      props: [ 'photo', 'close' ],
+      ready: function () {
+        var that = this;
+        global.document.querySelector('.popup__image img').addEventListener('load', function () {
+          that.$dispatch('load');
+        }, false);
+      }
     }
   },
   methods: {
-    open: function (photo) {
+    open: function (index) {
+      var photo = this.$get('photos')[index];
       this.$set('photo', photo);
-      this.$set('height', Math.max(global.innerHeight, global.document.body.clientHeight, photo.original_size.height + 60));
+      this.$set('index', index);
     },
     close: function () {
       this.$delete('photo');
-      this.$delete('height');
+    },
+    backward: function () {
+      var index = this.$get('index'), total = this.$get('total');
+      if (0 <= index - 1) {
+        this.$set('index', index - 1);
+        this.open(index - 1);
+      }
+    },
+    forward: function () {
+      var index = this.$get('index'), total = this.$get('total');
+      if (total > index + 1) {
+        this.$set('index', index + 1);
+        this.open(index + 1);
+      }
+      if (total === index + 1) {
+        var query = global.encodeURIComponent(this.$route.params.query);
+        var that = this;
+        var photos = this.$get('photos'), total = this.$get('total');
+        tumblrUpdated(query, total + 40, total, photos, function (data) {
+          that.$set('photos', data.photos);
+          that.$set('total', data.total);
+          that.forward();
+        });
+      }
+    },
+    pause: function () {
+      this.$set('playing', false);
+    },
+    play: function () {
+      this.$set('playing', true);
+      this.forward();
+    }
+  },
+  events: {
+    'load': function () {
+      var playing = this.$get('playing');
+      if (!playing) return;
+      var that = this;
+      var timeoutId = global.setTimeout(function () {
+        global.clearTimeout(timeoutId);
+        that.forward();
+      }, 3000);
     }
   },
   route: {
     data: function (transition) {
       var query = this.$route.params.query ? global.encodeURIComponent(this.$route.params.query) : 'starwars';
-      var recursiveJSONP = function (count, photos) {
-        Vue.http
-        .jsonp((function (query) {
-          var patterns = [
-            {
-              re: /^[^\.\/]+\.[^\.\/]+/,
-              url: 'https://api.tumblr.com/v2/blog/' + query + '/posts/photo?api_key=' + tumblrAPIKey + '&offset=' + count
-            },
-            {
-              re: /^[^\.\/]+$/,
-              url: 'https://api.tumblr.com/v2/tagged/?api_key=' + tumblrAPIKey + '&tag=' + query
-            }
-          ];
-          return _.
-          chain(patterns)
-          .filter(function (pattern) { return pattern.re.test(query); })
-          .first()
-          .value().url;
-        })(query))
-        .then(function (response) {
-          //console.debug(response.data);
-          var posts = response.data.response.posts || response.data.response;
-          var currentPhotos = _.filter(posts, function (item) { return 'photo' === item.type; });
-          var total = response.data.response.total_posts ? 100 : 20;
-          var _photos = _.union(photos, currentPhotos);
-          var _count = count + currentPhotos.length;
-          console.log(total, _count);
-          if (20 > _count || total <= _count) return transition.next({ items: _photos });
-          recursiveJSONP(_count, _photos);
-        });
-      };
-      recursiveJSONP(0, []);
+      tumblrUpdated(query, 100, 0, [], function (data) {
+        transition.next(data);
+      });
     }
   }
 });
@@ -132,3 +158,59 @@ router.map({
 });
 
 router.start(App, '#app');
+
+
+// API
+
+function tumblrUpdated (query, max, offset, photos, callback) {
+  var url = (function () {
+    var patterns = [
+      {
+        re: /^[^\.\/]+\.[^\.\/]+/,
+        url: 'https://api.tumblr.com/v2/blog/' + query + '/posts/photo?api_key=' + tumblrAPIKey + '&offset=' + offset
+      },
+      {
+        re: /^[^\.\/]+$/,
+        url: 'https://api.tumblr.com/v2/tagged/?api_key=' + tumblrAPIKey + '&tag=' + query
+      }
+    ];
+    return _.
+    chain(patterns)
+    .filter(function (pattern) { return pattern.re.test(query); })
+    .first()
+    .value().url;
+  })();
+
+  Vue.http
+  .jsonp(url)
+  .then(function (response) {
+    var posts = response.data.response.posts || response.data.response;
+
+    var currentPhotos = _
+    .chain(posts)
+    .filter(function (post) { return 'photo' === post.type; })
+    .map(function (post) {
+      return _.map(post.photos, function (photo) {
+        return _.extend(photo, _.omit(post, 'photos'));
+      });
+    })
+    .flatten()
+    .value();
+
+    var actualTotalCount = response.data.response.total_posts || 20;
+    var maxCount = actualTotalCount > max ? max : currentPhotos.length;
+    var totalPhotos = _.union(photos, currentPhotos);
+    var totalCount = totalPhotos.length;
+
+    console.log(maxCount, totalCount);
+
+    if (actualTotalCount > totalCount && maxCount > totalCount) {
+      tumblrUpdated(query, max, totalCount, totalPhotos, callback);
+      return;
+    }
+
+    if (actualTotalCount * 2 > totalCount) {
+      callback({ photos: totalPhotos, total: totalCount });
+    }
+  });
+}
